@@ -1,2 +1,6 @@
-# projects
-Mohammed's projects, organized by category
+# Projects
+
+Organized collection of Mohammed's projects.
+
+- `games/` — game projects (e.g. Triangle number-placement game)
+- `study/` — study-related projects and resources
