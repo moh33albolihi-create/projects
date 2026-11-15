@@ -5,16 +5,66 @@ const colors=['#ff5b70','#52d3f2','#f9d34f','#79e582','#c78bff','#ff9d4e'];let s
 const configs=Array.from({length:15},(_,i)=>({speed:24+i*5.8,total:20+i*5,interval:1.35-i*.045,palette:3+Math.floor(i/3),shape:i%5}));
 for(let i=1;i<=15;i++){let o=document.createElement('option');o.value=i;o.textContent='المرحلة '+i;sel.append(o)}sel.onchange=()=>{stage=+sel.value;reset()};document.getElementById('start').onclick=reset;document.getElementById('swap').onclick=()=>{[current,next]=[next,current]};
 const center={x:400,y:290},radius=15;let path=[],length=0;
-function build(){path=[];let k=configs[stage-1].shape;for(let t=0;t<=1.0001;t+=.002){let a,p;if(k===0){a=3.4*Math.PI*t+Math.PI;p=245-165*t}else if(k===1){a=4.1*Math.PI*t+Math.PI;p=230-145*t}else if(k===2){a=3.7*Math.PI*t+Math.PI/2;p=235-145*t}else if(k===3){a=4.4*Math.PI*t;p=240-155*t}else{a=3.9*Math.PI*t+Math.PI;p=240-160*t}let xx=center.x+Math.cos(a)*p,yy=center.y+Math.sin(a)*p*.77;let prev=path[path.length-1],d=prev?Math.hypot(xx-prev.x,yy-prev.y):0;length+=d;path.push({x:xx,y:yy,d:length})}}
+function build(){
+path=[];length=0;let k=configs[stage-1].shape, variant=Math.floor((stage-1)/5);
+for(let i=0;i<=1100;i++){
+let t=i/1100,a,r,xx,yy;
+if(k===0){a=Math.PI+3.65*Math.PI*t;r=255-178*t;xx=center.x+Math.cos(a)*r;yy=center.y+Math.sin(a)*r*.79}
+else if(k===1){a=Math.PI+4.3*Math.PI*t;r=260-185*t;xx=center.x+Math.cos(a)*r;yy=center.y+Math.sin(a)*r*.74}
+else if(k===2){a=Math.PI+3.8*Math.PI*t;r=250-175*t;xx=center.x+Math.cos(a)*r+15*Math.sin(5*Math.PI*t);yy=center.y+Math.sin(a)*r*.75}
+else if(k===3){a=Math.PI+4.65*Math.PI*t;r=253-180*t;xx=center.x+Math.cos(a)*r;yy=center.y+Math.sin(a)*r*.68+18*Math.sin(6*Math.PI*t)}
+else {a=Math.PI+4*Math.PI*t;r=255-178*t;xx=center.x+Math.cos(a)*r+15*Math.sin(7*Math.PI*t);yy=center.y+Math.sin(a)*r*.79+12*Math.cos(5*Math.PI*t)}
+if(variant===1){xx+=10*Math.sin(t*6*Math.PI);yy+=8*Math.sin(t*4*Math.PI)}
+if(variant===2){xx+=16*Math.sin(t*8*Math.PI);yy+=12*Math.cos(t*6*Math.PI)}
+let prev=path[path.length-1];length+=prev?Math.hypot(xx-prev.x,yy-prev.y):0;path.push({x:xx,y:yy,d:length});
+}
+}
 function point(d){if(d<=0)return path[0];if(d>=length)return path[path.length-1];let lo=0,hi=path.length-1;while(lo<hi){let m=(lo+hi)>>1;if(path[m].d<d)lo=m+1;else hi=m}let a=path[Math.max(0,lo-1)],b=path[lo],t=(d-a.d)/(b.d-a.d||1);return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}}
 function reset(){stage=+sel.value;length=0;build();score=0;chain=[];shots=[];running=true;ended=false;spawned=0;spawnClock=0;combo=0;current=Math.floor(Math.random()*configs[stage-1].palette);next=Math.floor(Math.random()*configs[stage-1].palette);stats.textContent='المرحلة '+stage+' | النقاط 0'}
-function addBug(){let palette=configs[stage-1].palette;let color=Math.floor(Math.random()*palette);if(chain.length&&Math.random()<.55)color=chain[chain.length-1].color;chain.push({d:-radius*2,color})}
+function addBug(){
+let palette=configs[stage-1].palette;
+if(chain.length&&chain[0].d<30)return false;
+let color=Math.floor(Math.random()*palette);
+if(chain.length&&Math.random()<.48)color=chain[0].color;
+chain.unshift({d:0,color});spawned++;return true;
+}
 function drawBug(px,py,color,r=radius){x.save();x.translate(px,py);x.fillStyle=colors[color];x.strokeStyle='#1b211d';x.lineWidth=2.5;x.beginPath();x.ellipse(0,0,r*.8,r,0,0,7);x.fill();x.stroke();x.beginPath();x.moveTo(-5,-r*.6);x.lineTo(-12,-r*1.35);x.moveTo(5,-r*.6);x.lineTo(12,-r*1.35);for(let j=-1;j<=1;j++){x.moveTo(-r*.7,j*7);x.lineTo(-r*1.15,j*9);x.moveTo(r*.7,j*7);x.lineTo(r*1.15,j*9)}x.stroke();x.fillStyle='#fff';x.beginPath();x.arc(-4,-3,3,0,7);x.arc(4,-3,3,0,7);x.fill();x.fillStyle='#111';x.beginPath();x.arc(-4,-3,1.4,0,7);x.arc(4,-3,1.4,0,7);x.fill();x.restore()}
 function drawRoach(){x.save();x.translate(center.x,center.y);x.rotate(aim+Math.PI/2);x.strokeStyle='#15101d';x.lineWidth=6;x.lineCap='round';x.beginPath();x.moveTo(-12,-20);x.lineTo(-24,-76);x.moveTo(12,-20);x.lineTo(24,-76);x.stroke();x.fillStyle='#dd62cf';x.beginPath();x.ellipse(0,15,34,44,0,0,7);x.fill();x.stroke();x.fillStyle='#9a76d6';x.beginPath();x.ellipse(0,-15,44,30,0,0,7);x.fill();x.stroke();x.fillStyle='#ff8c9c';x.beginPath();x.arc(-13,-25,11,0,7);x.fill();x.fillStyle='#ffe87c';x.beginPath();x.arc(13,-25,11,0,7);x.fill();x.fillStyle='#111';x.beginPath();x.arc(-10,-24,3,0,7);x.arc(10,-24,3,0,7);x.fill();x.strokeStyle='#171020';x.lineWidth=3;x.beginPath();x.arc(0,-11,17,.15,Math.PI-.15);x.stroke();x.fillStyle='#29162c';x.beginPath();x.ellipse(0,-39,11,6,0,0,7);x.fill();x.restore();drawBug(center.x+Math.cos(aim)*59,center.y+Math.sin(aim)*59,current,11)}
 function fire(px,py){if(!running)return;let a=Math.atan2(py-center.y,px-center.x);aim=a;shots.push({x:center.x+Math.cos(a)*65,y:center.y+Math.sin(a)*65,vx:Math.cos(a)*470,vy:Math.sin(a)*470,color:current});current=next;next=Math.floor(Math.random()*configs[stage-1].palette)}
-function hit(s){let best=-1,dist=28;for(let i=0;i<chain.length;i++){if(chain[i].d<0)continue;let p=point(chain[i].d),v=Math.hypot(s.x-p.x,s.y-p.y);if(v<dist){best=i;dist=v}}if(best<0)return false;let at=best+(s.x-point(chain[best].d).x+s.y-point(chain[best].d).y>0?1:0);let d=chain[best].d+(at>best?16:-16);chain.splice(at,0,{d,color:s.color});for(let j=at+1;j<chain.length;j++)chain[j].d=Math.max(chain[j].d,chain[j-1].d+30);let l=at,r=at;while(l>0&&chain[l-1].color===s.color)l--;while(r+1<chain.length&&chain[r+1].color===s.color)r++;if(r-l+1>=3){let n=r-l+1;chain.splice(l,n);score+=n*10*(++combo);for(let j=l;j<chain.length;j++)chain[j].d-=n*30}else combo=0;return true}
-function update(dt){if(!running)return;let cfg=configs[stage-1];spawnClock+=dt;if(spawned<cfg.total&&spawnClock>=cfg.interval){spawnClock=0;addBug();spawned++}for(let i=0;i<chain.length;i++){chain[i].d+=cfg.speed*dt;if(i&&chain[i].d<chain[i-1].d+30)chain[i].d=chain[i-1].d+30}for(let i=shots.length-1;i>=0;i--){let s=shots[i];s.x+=s.vx*dt;s.y+=s.vy*dt;if(hit(s)||s.x<0||s.x>800||s.y<0||s.y>560)shots.splice(i,1)}if(chain.some(b=>b.d>=length-15)){running=false;ended='خسرت! حاول مرة ثانية'}else if(spawned>=cfg.total&&chain.length===0){running=false;ended=stage===15?'مبروك! خلصت كل المراحل 🎉':'فزت! انتقل للمرحلة التالية';if(stage<15){sel.value=stage+1}}stats.textContent='المرحلة '+stage+' | النقاط '+score+' | المتبقي '+(cfg.total-spawned+chain.length)}
-function render(){x.clearRect(0,0,800,560);let grad=x.createRadialGradient(400,280,40,400,280,560);grad.addColorStop(0,'#7b7564');grad.addColorStop(.7,'#4d594b');grad.addColorStop(1,'#252d29');x.fillStyle=grad;x.fillRect(0,0,800,560);x.save();x.globalAlpha=.18;for(let i=0;i<115;i++){let xx=(i*137+37)%800,yy=(i*97+13)%560;x.fillStyle=i%3?'#1b3029':'#dfcba1';x.beginPath();x.ellipse(xx,yy,3+i%7,2+i%4,(i%8)*.3,0,7);x.fill()}x.restore();x.strokeStyle='#e4c38d';x.lineWidth=12;x.strokeRect(8,8,784,544);x.strokeStyle='#3a3029';x.lineWidth=4;x.strokeRect(17,17,766,526);x.beginPath();path.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.strokeStyle='#242b27';x.lineWidth=48;x.stroke();x.strokeStyle='#b9a48a';x.lineWidth=38;x.stroke();x.strokeStyle='#685b4e';x.lineWidth=30;x.stroke();x.strokeStyle='#d4bd9c';x.lineWidth=2;x.stroke();let end=path[path.length-1];x.fillStyle='#30251c';x.beginPath();x.arc(end.x,end.y,25,0,7);x.fill();x.strokeStyle='#e3b75d';x.lineWidth=5;x.stroke();x.fillStyle='#ff694f';x.beginPath();x.arc(end.x,end.y,11,0,7);x.fill();for(let b of chain){if(b.d>=0){let p=point(b.d);drawBug(p.x,p.y,b.color)}}for(let s of shots)drawBug(s.x,s.y,s.color,10);drawRoach();drawBug(750,42,next,12);x.fillStyle='white';x.font='15px system-ui';x.fillText('التالي',700,23);if(!running){x.fillStyle='#080a14bb';x.fillRect(0,0,800,560);x.textAlign='center';x.fillStyle='#fff';x.font='bold 34px system-ui';x.fillText(ended||'اضغط ابدأ للعب',400,270);x.textAlign='start'}}
+function hit(s){
+let best=-1,dist=29;
+for(let i=0;i<chain.length;i++){let p=point(chain[i].d),v=Math.hypot(s.x-p.x,s.y-p.y);if(v<dist){best=i;dist=v}}
+if(best<0)return false;
+let p=point(chain[best].d),ahead=point(Math.min(length,chain[best].d+10));
+let dot=(s.x-p.x)*(ahead.x-p.x)+(s.y-p.y)*(ahead.y-p.y);
+let at=best+(dot>0?1:0),d=chain[best].d+(dot>0?15:-15);
+chain.splice(at,0,{d,color:s.color});
+for(let j=at+1;j<chain.length;j++)chain[j].d=Math.max(chain[j].d,chain[j-1].d+30);
+for(let j=at-1;j>=0;j--)chain[j].d=Math.min(chain[j].d,chain[j+1].d-30);
+let l=at,r=at;
+while(l>0&&chain[l-1].color===s.color)l--;
+while(r+1<chain.length&&chain[r+1].color===s.color)r++;
+if(r-l+1>=3){let n=r-l+1;chain.splice(l,n);score+=n*10*(++combo);for(let j=l;j<chain.length;j++)chain[j].d=Math.max(0,chain[j].d-n*30)}
+else combo=0;
+return true;
+}
+function update(dt){
+if(!running)return;
+let cfg=configs[stage-1];spawnClock+=dt;
+if(spawned<cfg.total&&spawnClock>=cfg.interval){if(addBug())spawnClock=0}
+for(let i=chain.length-1;i>=0;i--){
+chain[i].d+=cfg.speed*dt;
+if(i<chain.length-1)chain[i].d=Math.min(chain[i].d,chain[i+1].d-30);
+}
+for(let i=shots.length-1;i>=0;i--){
+let s=shots[i];s.x+=s.vx*dt;s.y+=s.vy*dt;
+if(hit(s)||s.x<0||s.x>800||s.y<0||s.y>560)shots.splice(i,1)
+}
+if(chain.some(b=>b.d>=length-15)){running=false;ended='خسرت! وصلت الحشرات إلى النهاية'}
+else if(spawned>=cfg.total&&chain.length===0){running=false;ended=stage===15?'مبروك! خلصت كل المراحل 🎉':'فزت! اضغط ابدأ للمرحلة التالية';if(stage<15)sel.value=stage+1}
+stats.textContent='المرحلة '+stage+' | النقاط '+score+' | المتبقي '+(cfg.total-spawned+chain.length)
+}
+function render(){x.clearRect(0,0,800,560);let grad=x.createRadialGradient(400,280,40,400,280,560);grad.addColorStop(0,'#7b7564');grad.addColorStop(.7,'#4d594b');grad.addColorStop(1,'#252d29');x.fillStyle=grad;x.fillRect(0,0,800,560);x.save();x.globalAlpha=.18;for(let i=0;i<115;i++){let xx=(i*137+37)%800,yy=(i*97+13)%560;x.fillStyle=i%3?'#1b3029':'#dfcba1';x.beginPath();x.ellipse(xx,yy,3+i%7,2+i%4,(i%8)*.3,0,7);x.fill()}x.restore();x.strokeStyle='#e4c38d';x.lineWidth=12;x.strokeRect(8,8,784,544);x.strokeStyle='#3a3029';x.lineWidth=4;x.strokeRect(17,17,766,526);x.beginPath();path.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.strokeStyle='#242b27';x.lineWidth=48;x.stroke();x.strokeStyle='#b9a48a';x.lineWidth=38;x.stroke();x.strokeStyle='#685b4e';x.lineWidth=30;x.stroke();x.strokeStyle='#d4bd9c';x.lineWidth=2;x.stroke();let entrance=path[0];x.save();x.translate(entrance.x,entrance.y);x.fillStyle='#251b16';x.strokeStyle='#e9b65e';x.lineWidth=6;x.beginPath();x.arc(0,0,24,0,Math.PI*2);x.fill();x.stroke();x.fillStyle='#ffdf87';x.font='bold 13px system-ui';x.textAlign='center';x.fillText('دخول',0,-33);x.restore();let end=path[path.length-1];x.fillStyle='#30251c';x.beginPath();x.arc(end.x,end.y,25,0,7);x.fill();x.strokeStyle='#e3b75d';x.lineWidth=5;x.stroke();x.fillStyle='#ff694f';x.beginPath();x.arc(end.x,end.y,11,0,7);x.fill();for(let b of chain){if(b.d>=0){let p=point(b.d);drawBug(p.x,p.y,b.color)}}for(let s of shots)drawBug(s.x,s.y,s.color,10);drawRoach();drawBug(750,42,next,12);x.fillStyle='white';x.font='15px system-ui';x.fillText('التالي',700,23);if(!running){x.fillStyle='#080a14bb';x.fillRect(0,0,800,560);x.textAlign='center';x.fillStyle='#fff';x.font='bold 34px system-ui';x.fillText(ended||'اضغط ابدأ للعب',400,270);x.textAlign='start'}}
 function frame(t){let dt=Math.min(.04,(t-last)/1000||0);last=t;update(dt);render();requestAnimationFrame(frame)}function coords(e){let r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*800/r.width,y:(e.clientY-r.top)*560/r.height}}c.addEventListener('pointermove',e=>{let p=coords(e);aim=Math.atan2(p.y-center.y,p.x-center.x)});c.addEventListener('pointerdown',e=>{e.preventDefault();let p=coords(e);fire(p.x,p.y)});window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();[current,next]=[next,current]}});length=0;build();requestAnimationFrame(frame);
 })();
 </script></html>
